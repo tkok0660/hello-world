@@ -1,0 +1,257 @@
+#include<iostream>
+using namespace std;
+
+//global variables
+bool *Visited;
+bool cycles = false;
+int graph_weight[8][8] = { 0 };
+int weight;
+//function prototypes
+int minDistance(int[], bool[], int);
+//Linked List
+struct Node
+{
+	int vertex;
+	Node *next;
+};
+//Class
+class Graph
+{
+private:
+	int e, n; //e = # of edges, n = # of vertices;
+	int v1, v2;
+	Node *headnodes;
+
+public:
+	Graph(int nodes)
+	{
+		n = nodes;
+		headnodes = new Node[n];
+		for (int i = 0; i < n; i++)
+		{
+			headnodes[i].vertex = i;
+			headnodes[i].next = 0;
+		}
+
+	}
+	void create()
+	{
+		Node *tmp;
+		Node *newNode;
+		cout << "Number of Edges : ";
+		cin >> e;
+		for (int i = 0; i < e; i++)
+		{
+			cout << "Vertex 1 : ";
+			cin >> v1;
+			cout << "Vertex 2 : ";
+			cin >> v2;
+			cout << "Enter weight of " << v1 << "->" << v2 << " : ";
+			cin >> weight;
+			graph_weight[v1][v2] = weight;
+			graph_weight[v2][v1] = weight;
+
+			//connect the vertices
+			//v1 to v2
+			newNode = new Node;
+			newNode->vertex = v2;
+			newNode->next = 0;
+			if (headnodes[v1].next == 0)
+			{
+				headnodes[v1].next = newNode;
+			}
+			else
+			{
+				tmp = &headnodes[v1];
+				while (tmp->next != 0)
+				{
+					tmp = tmp->next;
+				}
+				tmp->next = newNode;
+			}
+			//v2 to v1
+			newNode = new Node;
+			newNode->vertex = v1;
+			newNode->next = 0;
+			if (headnodes[v2].next == 0)
+			{
+				headnodes[v2].next = newNode;
+			}
+			else
+			{
+				tmp = &headnodes[v2];
+				while (tmp->next != 0)
+				{
+					tmp = tmp->next;
+				}
+				tmp->next = newNode;
+			}
+		}
+	}
+	void DFS(int parent, int v)
+	{
+		Visited[v] = true;
+		Node *adjnode = headnodes[v].next;
+		while (!adjnode)
+		{
+			if (!Visited[adjnode->vertex])
+				DFS(v, adjnode->vertex);
+			else if (parent != adjnode->vertex)
+			{
+				cycles = true;
+			}
+			adjnode = adjnode->next;
+		}
+	}
+	void dijkstra_shortest_path()
+	{
+		int startV;//starting vertex
+		int dist[8];
+		bool spSet[8]; //spSet will be true if vertex i is included in shortest path from startV to i is finalized
+
+		cout << "Enter the starting vertex : ";
+		cin >> startV;
+		for (int i = 0; i < n; i++)
+		{
+			dist[i] = INT_MAX;
+			spSet[i] = false;
+		}
+		//distance of starting vertex to itself is always 0
+		dist[startV] = 0;
+
+		for (int i = 0; i < n - 1; i++)
+		{
+			int u = minDistance(dist, spSet, n);
+			spSet[u] = true;
+
+			for (int j = 0; j < n; j++)
+			{
+				if (!spSet[j] && graph_weight[u][j] && dist[u] != INT_MAX && (dist[u] + graph_weight[u][j]) < dist[j])
+					dist[j] = dist[u] + graph_weight[u][j];
+			}
+		}
+
+		//print
+		cout << "\n***Dijkstra Shortest Path***\n";
+		cout << "Vertex   Distance from Source\n";
+		for (int i = 0; i < n; i++)
+		{
+			cout << i << "\t" << dist[i] << endl;
+		}
+	}
+	void print()
+	{
+		Node *tmp;
+		cout << "This is how the linked list looks :\n";
+		for (int i = 0; i < n; i++)
+		{
+			tmp = &headnodes[i];
+			while (tmp->next != 0)
+			{
+				cout << tmp->vertex << "-->";
+				tmp = tmp->next;
+			}
+			cout << tmp->vertex << endl;
+		}
+		cout << endl;
+	}
+};
+int main()
+{
+	int numOfComponents = 0;
+	int n = 8;
+	Visited = new bool[n];
+	Graph G(n);
+	G.create();
+	G.print();
+	G.dijkstra_shortest_path();
+	for (int i = 0; i < n; i++)
+	{
+		Visited[i] = false;
+		for (int j = 0; j < n; j++)
+		{
+			if (!Visited[j])
+			{
+				G.DFS(0, j);
+				numOfComponents++;
+			}
+		}
+	}
+	if (cycles)
+		cout << "This graph has a cycle." << endl;
+	else
+		cout << "This graph has no cycle." << endl;
+	cout << "Number of components in this graph : " << numOfComponents << endl;
+
+	system("pause");
+	return 0;
+}
+
+int minDistance(int dist[], bool spSet[], int n)
+{
+	int min = INT_MAX, min_index;
+	for (int i = 0; i < n; i++)
+	{
+		if (spSet[i] == false && dist[i] <= min)
+		{
+			min = dist[i];
+			min_index = i;
+		}
+	}
+	return min_index;
+}
+/*
+OUTPUT:
+
+Number of Edges : 8
+Vertex 1 : 0
+Vertex 2 : 1
+Enter weight of 0->1 : 2
+Vertex 1 : 1
+Vertex 2 : 2
+Enter weight of 1->2 : 1
+Vertex 1 : 2
+Vertex 2 : 3
+Enter weight of 2->3 : 2
+Vertex 1 : 3
+Vertex 2 : 4
+Enter weight of 3->4 : 1
+Vertex 1 : 4
+Vertex 2 : 5
+Enter weight of 4->5 : 2
+Vertex 1 : 5
+Vertex 2 : 6
+Enter weight of 5->6 : 1
+Vertex 1 : 6
+Vertex 2 : 7
+Enter weight of 6->7 : 2
+Vertex 1 : 7
+Vertex 2 : 0
+Enter weight of 7->0 : 1
+This is how the linked list looks :
+0-->1-->7
+1-->0-->2
+2-->1-->3
+3-->2-->4
+4-->3-->5
+5-->4-->6
+6-->5-->7
+7-->6-->0
+
+Enter the starting vertex : 3
+
+***Dijkstra Shortest Path***
+Vertex   Distance from Source
+0       5
+1       3
+2       2
+3       0
+4       1
+5       3
+6       4
+7       6
+This graph has no cycle.
+Number of components in this graph : 8
+Press any key to continue . . .
+
+*/
